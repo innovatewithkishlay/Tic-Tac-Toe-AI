@@ -59,14 +59,25 @@
         .cell.animate {
             animation: pop 0.18s;
         }
-        /* Win highlight for winning cells */
-        .cell.win {
+
+        /* Red highlight for AI win */
+        .cell.win-ai {
             background-color: #ffcccc;
             border-color: #ff4444;
             color: #cc0000 !important;
             font-weight: 900;
             box-shadow: 0 0 10px 2px #ff6666;
         }
+
+        /* Green highlight for human win */
+        .cell.win-human {
+            background-color: #ccffcc;
+            border-color: #22aa22;
+            color: #117711 !important;
+            font-weight: 900;
+            box-shadow: 0 0 10px 2px #55cc55;
+        }
+
         @keyframes pop {
             0% {
                 transform: scale(1);
@@ -133,16 +144,20 @@
             const btn = document.createElement('button');
             btn.className = 'cell';
 
-            // Add player classes
             if (board[i] === 'X') btn.classList.add('x');
             if (board[i] === 'O') btn.classList.add('o');
 
             btn.innerHTML = board[i] === ' ' ? '' : board[i];
             btn.disabled = board[i] !== ' ' || gameOver;
 
-            // Highlight winning cells
             if (winningCombo.includes(i)) {
-                btn.classList.add('win');
+                if (message && message.toLowerCase().includes('ai')) {
+                    btn.classList.add('win-ai');
+                } else if (message && message.toLowerCase().includes('you')) {
+                    btn.classList.add('win-human');
+                } else {
+                    btn.classList.add('win-ai');  // fallback
+                }
             }
 
             btn.onclick = () => handleMove(i);
