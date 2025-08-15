@@ -3,61 +3,69 @@ from game import create_board, place_move, check_winner, is_board_full
 from ai import find_best_move
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # For session management
+app.secret_key = 'your_secret_key'
 
 def get_board():
-    return session.get("board", create_board())
+    return session.get('board', create_board())
 
 def save_board(board):
-    session["board"] = board
+    session['board'] = board
 
-def current_player():
-    # Alternate based on number of moves
-    board = get_board()
-    if board.count('X') == board.count('O'):
-        return 'X'
-    else:
-        return 'O'
+def find_winning_combo(board, player):
+    win_conditions = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ]
+    for combo in win_conditions:
+        if all(board[i] == player for i in combo):
+            return combo
+    return []
 
-@app.route('/', methods=["GET", "POST"])
+@app.route('/')
 def index():
     board = get_board()
-    winner = None
     message = None
+    winning_combo = []
+    return render_template(
+        'index.html', 
+        board=board, 
+        message=message, 
+        winning_combo=winning_combo
+    )
 
-    if request.method == "POST":
-        move = int(request.form['move'])
-        player = current_player()
+@app.route('/move', methods=['POST'])
+def move():
+    data = request.get_json()
+    move = data.get('move')
+    board = get_board()
+    message = None
+    winning_combo = []
+    # Human move = X
+    if board[move] == ' ':
+        place_move(board, move, 'X')
+        if check_winner(board, 'X'):
+            message = "You win! 🎉"
+            winning_combo = find_winning_combo(board, 'X')
+        elif is_board_full(board):
+            message = "It's a tie!"
+        else:
+            # AI move
+            ai_move = find_best_move(board, 'O', 'X')
+            if ai_move is not None and ai_move != -1:
+                place_move(board, ai_move, 'O')
+                if check_winner(board, 'O'):
+                    message = "AI wins, but no worries—try again! 🤖"
+                    winning_combo = find_winning_combo(board, 'O')
+                elif is_board_full(board):
+                    message = "It's a tie!"
+    save_board(board)
+    return jsonify({'board': board, 'message': message, 'winning_combo': winning_combo})
 
-        if place_move(board, move, player):
-            # Check for winner after player move
-            if check_winner(board, player):
-                winner = player
-                message = f"{player} wins!"
-            elif is_board_full(board):
-                message = "It's a tie!"
-            else:
-                # If it's human's move, now it's AI's turn
-                if player == 'X':
-                    ai_move = find_best_move(board, 'O', 'X')
-                    if place_move(board, ai_move, 'O'):
-                        if check_winner(board, 'O'):
-                            winner = 'O'
-                            message = "O wins!"
-                        elif is_board_full(board):
-                            message = "It's a tie!"
-        save_board(board)
-
-    # For GET or after POST, reset session if game over
-    if message or winner:
-        session.pop("board", None)
-
-    return render_template("index.html", board=board, message=message)
-
-@app.route('/reset')
+@app.route('/reset', methods=['POST'])
 def reset():
-    session.pop("board", None)
-    return ('', 204)  # No Content
+    session['board'] = create_board()
+    return jsonify({'board': session['board']})
 
 if __name__ == '__main__':
     app.run(debug=True)

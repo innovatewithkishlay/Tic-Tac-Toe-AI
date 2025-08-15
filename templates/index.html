@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Tic-Tac-Toe AI</title>
@@ -6,82 +6,165 @@
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: #f4f6fb;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; margin: 0;
         }
-        h1 {
-            color: #34495e;
-            margin-top: 32px;
-        }
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 70px);
-            grid-gap: 12px;
-            margin: 24px 0;
-            background: #e1ecf4;
-            padding: 20px;
-            border-radius: 18px;
-            box-shadow: 0 8px 24px #3331  ;
+        h1 { color: #34495e; margin-top: 32px; }
+        #board {
+            display: grid; grid-template-columns: repeat(3, 80px); grid-gap: 10px;
+            margin: 30px 0 0 0;
+            background: #e1ecf4; padding: 20px;
+            border-radius: 22px; box-shadow: 0 8px 24px #3332;
+            position: relative;
         }
         .cell {
-            width: 70px; height: 70px;
-            font-size: 2.8em;
-            font-family: inherit;
-            background: #fff;
-            color: #2980b9;
-            border: 2px solid #59abe3;
-            border-radius: 12px;
-            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            box-shadow: 1px 2px 12px #294E6322;
+            width: 80px; height: 80px;
+            font-size: 2.4em; background: #fff;
+            border: 3px solid #59abe3;
+            border-radius: 13px; cursor: pointer; color: #2980b9;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, transform 0.12s, color 0.12s;
         }
-        .cell:disabled {
-            background: #f7f6f2;
-            color: #bbb;
-            cursor: not-allowed;
+        .cell.x { color: #2980b9;}
+        .cell.o { color: #ff6f61;}
+        .cell.animate { animation: pop .18s;}
+        @keyframes pop {
+            0% { transform: scale(1);}
+            70% { transform: scale(1.26);}
+            100% { transform: scale(1);}
         }
-        .cell.x { color: #2980b9; }
-        .cell.o { color: #ff6f61; }
-        .status {
-            margin: 16px 0 10px 0;
-            font-size: 1.3em;
-            color: #34495e;
+        .cell:disabled, .cell.disabled {
+            background: #f7f6f2; color: #bbb; cursor: not-allowed;
+        }
+        #status {
+            margin: 24px 0 0 0;
+            font-size: 1.2em; min-height: 28px;
         }
         .btn {
-            padding: 12px 26px;
-            font-size: 1em;
-            border-radius: 10px;
-            background: #2980b9;
-            color: #fff;
-            border: none;
-            transition: background 0.2s;
-            margin-top: 16px;
-            box-shadow: 1px 2px 6px #294E6322;
+            padding: 12px 26px; font-size: 1em;
+            border-radius: 10px; background: #2980b9; color: #fff;
+            border: none; margin-top: 22px; transition: background 0.2s;
+            box-shadow: 1px 2px 8px #294E6322;
         }
         .btn:hover { background: #185886;}
+        #win-line {
+            position: absolute; z-index: 10; pointer-events: none;
+            left: 0; top: 0;
+            width: 240px; height: 240px;
+        }
+        /* Responsive */
+        @media (max-width: 600px) {
+          #board, #win-line { width: 180px; height: 180px;}
+          .cell { width: 50px; height: 50px; font-size: 1.3em;}
+        }
     </style>
 </head>
 <body>
     <h1>Tic-Tac-Toe vs AI</h1>
-    <form method="post">
-        <div class="board">
-            {% for i in range(9) %}
-                <button
-                    class="cell{% if board[i]=='X' %} x{% elif board[i]=='O' %} o{% endif %}"
-                    name="move" value="{{i}}"
-                    {% if board[i] != ' ' or message %}disabled{% endif %}
-                    >
-                    {{ board[i] if board[i] != ' ' else '&nbsp;'|safe }}
-                </button>
-            {% endfor %}
-        </div>
-    </form>
-    {% if message %}
-        <div class="status"><b>{{ message }}</b></div>
-        <form action="/reset" method="get"><button class="btn" type="submit">Restart</button></form>
-    {% endif %}
+    <div id="status"></div>
+    <div id="board"></div>
+    <svg id="win-line"></svg>
+    <button class="btn" onclick="restartGame()">Restart</button>
+
+<script>
+(() => {
+    let board = {{ board|tojson|safe }};
+    let message = {{ message|tojson|safe }};
+    let winningCombo = {{ winning_combo|tojson|safe }};
+    let gameOver = false;
+
+    const boardDiv = document.getElementById('board');
+    const statusDiv = document.getElementById('status');
+    const winLineSvg = document.getElementById('win-line');
+
+    const cellCenters = [
+        [40, 40], [120, 40], [200, 40],
+        [40, 120], [120, 120], [200, 120],
+        [40, 200], [120, 200], [200, 200]
+    ];
+
+    function renderBoard() {
+        boardDiv.innerHTML = '';
+        winLineSvg.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'cell';
+            if (board[i] === 'X') btn.classList.add('x');
+            if (board[i] === 'O') btn.classList.add('o');
+            btn.innerHTML = (board[i] === ' ') ? '' : board[i];
+            btn.disabled = board[i] !== ' ' || gameOver;
+            btn.onclick = () => handleMove(i);
+            boardDiv.appendChild(btn);
+        }
+        if (winningCombo && winningCombo.length === 3) {
+            drawWinningLine(winningCombo);
+        }
+    }
+
+    function drawWinningLine(combo) {
+        const [a, , c] = combo;
+        const start = cellCenters[a];
+        const end = cellCenters[c];
+        winLineSvg.innerHTML = `<line x1="${start[0]}" y1="${start[1]}" x2="${end}" y2="${end[1]}" stroke="#ffb366" stroke-width="15" stroke-linecap="round">
+          <animate attributeName="x2" from="${start}" to="${end}" dur="0.38s" fill="freeze" />
+          <animate attributeName="y2" from="${start[1]}" to="${end[1]}" dur="0.38s" fill="freeze" />
+          </line>`;
+    }
+
+    async function handleMove(i) {
+        if (gameOver) return;
+        const cellBtn = boardDiv.children[i];
+        cellBtn.classList.add('animate');
+        await sleep(100); // wait for animation
+        const resp = await fetch('/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ move: i })
+        });
+        const data = await resp.json();
+        board = data.board;
+        message = data.message;
+        winningCombo = data.winning_combo;
+        gameOver = !!message;
+        renderBoard();
+        updateStatus();
+    }
+
+    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+    function updateStatus() {
+        if (!message) {
+            let xCount = board.filter(x => x === 'X').length;
+            let oCount = board.filter(x => x === 'O').length;
+            if (xCount === oCount) statusDiv.textContent = "Your turn!";
+            else statusDiv.textContent = "AI is thinking...";
+        } else {
+            statusDiv.innerHTML = message + "<br><span style='color:#888; font-size:0.96em;'>Don't worry, you can beat the AI if you try again!</span>";
+        }
+    }
+
+    window.restartGame = () => {
+        fetch('/reset', { method: 'POST' })
+            .then(resp => resp.json())
+            .then(data => {
+                board = data.board;
+                message = null;
+                gameOver = false;
+                winningCombo = [];
+                renderBoard();
+                updateStatus();
+            });
+    };
+
+    boardDiv.addEventListener('click', e => {
+        let xCount = board.filter(x => x === 'X').length;
+        let oCount = board.filter(x => x === 'O').length;
+        if (xCount !== oCount && !message) e.preventDefault();
+    });
+
+    renderBoard();
+    updateStatus();
+})();
+</script>
 </body>
 </html>
