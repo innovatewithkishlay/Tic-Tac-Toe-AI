@@ -1,42 +1,72 @@
-# main.py
-
+import tkinter as tk
+from tkinter import messagebox
 from game import create_board, place_move, check_winner, is_board_full
-from utils import print_board, get_player_move
 from ai import find_best_move
 
-def play_game():
-    board = create_board()
-    human = 'X'
-    ai_player = 'O'
-    current_player = human
+class TicTacToeGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Tic-Tac-Toe AI")
+        
+        self.board = create_board()
+        self.buttons = []
+        self.human = 'X'
+        self.ai_player = 'O'
+        self.current_player = self.human
+        
+        self.create_widgets()
+        self.update_buttons()
 
-    print("Welcome to Tic-Tac-Toe!")
-    print_board(board)
+    def create_widgets(self):
+        frame = tk.Frame(self.master)
+        frame.pack()
+        
+        for i in range(9):
+            btn = tk.Button(frame, text=' ', font=('Arial', 24), width=5, height=2,
+                            command=lambda i=i: self.on_button_click(i))
+            btn.grid(row=i//3, column=i%3)
+            self.buttons.append(btn)
 
-    while True:
-        if current_player == human:
-            print("Your turn.")
-            move = get_player_move(board)
-            place_move(board, move, human)
-        else:
-            print("AI's turn.")
-            move = find_best_move(board, ai_player, human)
-            place_move(board, move, ai_player)
-
-        print_board(board)
-
-        if check_winner(board, current_player):
-            if current_player == human:
-                print("Congratulations! You won!")
+    def on_button_click(self, index):
+        if self.board[index] == ' ' and self.current_player == self.human:
+            place_move(self.board, index, self.human)
+            self.update_buttons()
+            if check_winner(self.board, self.human):
+                messagebox.showinfo("Game Over", "You won!")
+                self.reset_game()
+            elif is_board_full(self.board):
+                messagebox.showinfo("Game Over", "It's a tie!")
+                self.reset_game()
             else:
-                print("AI wins! Better luck next time.")
-            break
+                self.current_player = self.ai_player
+                self.master.after(500, self.ai_turn)
 
-        if is_board_full(board):
-            print("It's a tie!")
-            break
+    def ai_turn(self):
+        move = find_best_move(self.board, self.ai_player, self.human)
+        if move != -1:
+            place_move(self.board, move, self.ai_player)
+            self.update_buttons()
 
-        current_player = ai_player if current_player == human else human
+        if check_winner(self.board, self.ai_player):
+            messagebox.showinfo("Game Over", "AI wins!")
+            self.reset_game()
+        elif is_board_full(self.board):
+            messagebox.showinfo("Game Over", "It's a tie!")
+            self.reset_game()
+        else:
+            self.current_player = self.human
+
+    def update_buttons(self):
+        for i in range(9):
+            self.buttons[i]['text'] = self.board[i]
+            self.buttons[i]['state'] = 'normal' if self.board[i] == ' ' else 'disabled'
+
+    def reset_game(self):
+        self.board = create_board()
+        self.current_player = self.human
+        self.update_buttons()
 
 if __name__ == "__main__":
-    play_game()
+    root = tk.Tk()
+    game = TicTacToeGUI(root)
+    root.mainloop()
