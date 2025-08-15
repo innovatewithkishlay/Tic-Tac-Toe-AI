@@ -1,224 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tic-Tac-Toe AI</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f4f6fb;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #34495e;
-            margin-top: 2rem;
-        }
-        #container {
-            position: relative;
-            display: inline-block;
-            margin: 1.5rem 0 0 0;
-            width: 90vw;
-            max-width: 360px;
-        }
-        #board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-gap: 1vw;
-            background: #e1ecf4;
-            padding: 1rem;
-            border-radius: 1.4rem;
-            box-shadow: 0 8px 24px #3332;
-            width: 100%;
-            aspect-ratio: 1 / 1; /* Keep square */
-        }
-        .cell {
-            aspect-ratio: 1 / 1;
-            font-size: clamp(1.5rem, 5vw, 3rem);
-            background: #fff;
-            border: 0.3rem solid #59abe3;
-            border-radius: 1rem;
-            cursor: pointer;
-            color: #2980b9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s, transform 0.12s, color 0.12s;
-            user-select: none;
-        }
-        .cell.x {
-            color: #2980b9;
-        }
-        .cell.o {
-            color: #ff6f61;
-        }
-        .cell.animate {
-            animation: pop 0.18s;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tic-Tac-Toe AI</title>
+<style>
+  /* Reset and base */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    color: #2c3e50;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-        /* Red highlight for AI win */
-        .cell.win-ai {
-            background-color: #ffcccc;
-            border-color: #ff4444;
-            color: #cc0000 !important;
-            font-weight: 900;
-            box-shadow: 0 0 10px 2px #ff6666;
-        }
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
 
-        /* Green highlight for human win */
-        .cell.win-human {
-            background-color: #ccffcc;
-            border-color: #22aa22;
-            color: #117711 !important;
-            font-weight: 900;
-            box-shadow: 0 0 10px 2px #55cc55;
-        }
+  main {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
 
-        @keyframes pop {
-            0% {
-                transform: scale(1);
-            }
-            70% {
-                transform: scale(1.26);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-        .cell:disabled,
-        .cell.disabled {
-            background: #f7f6f2;
-            color: #bbb;
-            cursor: not-allowed;
-        }
-        #status {
-            margin: 1.5rem 0 0 0;
-            font-size: 1.2rem;
-            min-height: 28px;
-            text-align: center;
-            color: #34495e;
-        }
-        .btn {
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 0.75rem;
-            background: #2980b9;
-            color: #fff;
-            border: none;
-            margin: 1.5rem 0 3rem 0;
-            transition: background 0.2s;
-            box-shadow: 1px 2px 8px #294E6322;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #185886;
-        }
-    </style>
+  h1 {
+    font-weight: 700;
+    font-size: 2.8rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.04em;
+    color: #34495e;
+    text-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+  }
+
+  #status {
+    margin-bottom: 1.8rem;
+    font-weight: 500;
+    font-size: 1.2rem;
+    text-align: center;
+    min-height: 44px;
+    max-width: 320px;
+    line-height: 1.3;
+    color: #34495e;
+  }
+
+  #container {
+    background: #ffffff;
+    box-shadow: 0 15px 40px rgb(0 0 0 / 0.1);
+    border-radius: 1.25rem;
+    padding: 1.8rem;
+    width: 320px;
+    max-width: 90vw;
+  }
+
+  #board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .cell {
+    background: #f7fafc;
+    border: 3px solid #6cb4ee;
+    border-radius: 1rem;
+    font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: #2980b9;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    transition: background-color 0.25s, box-shadow 0.25s, color 0.25s;
+  }
+
+  .cell.x { color: #2980b9; }
+  .cell.o { color: #e94b35; }
+  .cell.animate {
+    animation: pop 0.2s;
+  }
+  .cell:disabled, .cell.disabled {
+    cursor: not-allowed;
+    background: #dde6ed;
+    color: #a0a6ad;
+  }
+
+  /* Win highlight */
+  .cell.win-ai {
+    background: #ffe5e5;
+    border-color: #e94b35;
+    color: #c0392b !important;
+    box-shadow: 0 0 8px 3px #fa807225;
+  }
+  .cell.win-human {
+    background: #e6f9e6;
+    border-color: #27ae60;
+    color: #219150 !important;
+    box-shadow: 0 0 8px 3px #98fb9875;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    70% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+  }
+
+  button.btn {
+    margin-top: 1.8rem;
+    background-color: #2980b9;
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2.2rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    border-radius: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgb(41 128 185 / 0.4);
+    transition: background-color 0.3s ease;
+    align-self: center;
+    user-select: none;
+  }
+  button.btn:hover,
+  button.btn:focus-visible {
+    background-color: #21689f;
+  }
+
+  footer#footer {
+    flex-shrink: 0;
+    background: #f7fafc;
+    text-align: center;
+    padding: 1.2rem 1rem;
+    font-size: 0.85rem;
+    color: #657786;
+    border-top: 1px solid #d4dde6;
+    user-select: none;
+  }
+  footer#footer a {
+    color: #2980b9;
+    text-decoration: none;
+    font-weight: 600;
+    margin: 0 0.5rem;
+  }
+  footer#footer a:hover,
+  footer#footer a:focus-visible {
+    text-decoration: underline;
+    color: #21689f;
+  }
+</style>
 </head>
 <body>
+  <main>
     <h1>Tic-Tac-Toe vs AI</h1>
     <div id="status"></div>
     <div id="container">
-        <div id="board"></div>
+      <div id="board"></div>
     </div>
     <button class="btn" onclick="restartGame()">Restart</button>
+  </main>
+
+  <footer id="footer">
+    <p>Made with ❤️ by Kishlay</p>
+    <p>
+      <a href="https://github.com/innovatewithkishlay/Tic-Tac-Toe-AI" target="_blank" rel="noopener noreferrer">GitHub Repo</a> |
+      <a href="https://kishlaykumar.onrender.com/" target="_blank" rel="noopener noreferrer">Portfolio</a>
+    </p>
+  </footer>
 
 <script>
 (() => {
-    let board = {{ board|tojson|safe }};
-    let message = {{ message|tojson|safe }};
-    let winningCombo = {{ winning_combo|tojson|safe }};
-    let gameOver = false;
+  let board = {{ board|tojson|safe }};
+  let message = {{ message|tojson|safe }};
+  let winningCombo = {{ winning_combo|tojson|safe }};
+  let gameOver = false;
 
-    const boardDiv = document.getElementById('board');
-    const statusDiv = document.getElementById('status');
+  const boardDiv = document.getElementById('board');
+  const statusDiv = document.getElementById('status');
 
-    function renderBoard() {
-        boardDiv.innerHTML = '';
+  function renderBoard() {
+    boardDiv.innerHTML = '';
 
-        for (let i = 0; i < 9; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'cell';
+    for (let i = 0; i < 9; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'cell';
 
-            if (board[i] === 'X') btn.classList.add('x');
-            if (board[i] === 'O') btn.classList.add('o');
+      if (board[i] === 'X') btn.classList.add('x');
+      if (board[i] === 'O') btn.classList.add('o');
 
-            btn.innerHTML = board[i] === ' ' ? '' : board[i];
-            btn.disabled = board[i] !== ' ' || gameOver;
+      btn.innerHTML = board[i] === ' ' ? '' : board[i];
+      btn.disabled = board[i] !== ' ' || gameOver;
 
-            if (winningCombo.includes(i)) {
-                if (message && message.toLowerCase().includes('ai')) {
-                    btn.classList.add('win-ai');
-                } else if (message && message.toLowerCase().includes('you')) {
-                    btn.classList.add('win-human');
-                } else {
-                    btn.classList.add('win-ai');  // fallback
-                }
-            }
-
-            btn.onclick = () => handleMove(i);
-            boardDiv.appendChild(btn);
-        }
-    }
-
-    async function handleMove(i) {
-        if (gameOver) return;
-        const cellBtn = boardDiv.children[i];
-        cellBtn.classList.add('animate');
-        await sleep(100);
-        const resp = await fetch('/move', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ move: i })
-        });
-        const data = await resp.json();
-        board = data.board;
-        message = data.message;
-        winningCombo = data.winning_combo;
-        gameOver = !!message;
-        renderBoard();
-        updateStatus();
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function updateStatus() {
-        if (!message) {
-            let xCount = board.filter(x => x === 'X').length;
-            let oCount = board.filter(x => x === 'O').length;
-            statusDiv.textContent = (xCount === oCount) ? "Your turn!" : "AI is thinking...";
+      if (winningCombo.includes(i)) {
+        if (message && message.toLowerCase().includes('ai')) {
+          btn.classList.add('win-ai');
+        } else if (message && message.toLowerCase().includes('you')) {
+          btn.classList.add('win-human');
         } else {
-            statusDiv.innerHTML = `${message}<br><span style="color:#888; font-size:0.96em;">Don't worry, you can beat the AI if you try again!</span>`;
+          btn.classList.add('win-ai');
         }
+      }
+
+      btn.onclick = () => handleMove(i);
+      boardDiv.appendChild(btn);
     }
+  }
 
-    window.restartGame = () => {
-        fetch('/reset', { method: 'POST' })
-            .then(resp => resp.json())
-            .then(data => {
-                board = data.board;
-                message = null;
-                gameOver = false;
-                winningCombo = [];
-                renderBoard();
-                updateStatus();
-            });
-    };
-
-    boardDiv.addEventListener('click', e => {
-        let xCount = board.filter(x => x === 'X').length;
-        let oCount = board.filter(x => x === 'O').length;
-        if (xCount !== oCount && !message) e.preventDefault();
+  async function handleMove(i) {
+    if (gameOver) return;
+    const cellBtn = boardDiv.children[i];
+    cellBtn.classList.add('animate');
+    await sleep(100);
+    const resp = await fetch('/move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({move: i})
     });
-
+    const data = await resp.json();
+    board = data.board;
+    message = data.message;
+    winningCombo = data.winning_combo;
+    gameOver = !!message;
     renderBoard();
     updateStatus();
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function updateStatus() {
+    if (!message) {
+      let xCount = board.filter(x => x === 'X').length;
+      let oCount = board.filter(x => x === 'O').length;
+      statusDiv.textContent = (xCount === oCount) ? "Your turn!" : "AI is thinking...";
+    } else {
+      statusDiv.innerHTML = `${message}<br><span style="color:#888; font-size:0.96em;">Don't worry, you can beat the AI if you try again!</span>`;
+    }
+  }
+
+  window.restartGame = () => {
+    fetch('/reset', {method: 'POST'})
+      .then(resp => resp.json())
+      .then(data => {
+        board = data.board;
+        message = null;
+        gameOver = false;
+        winningCombo = [];
+        renderBoard();
+        updateStatus();
+      });
+  };
+
+  boardDiv.addEventListener('click', e => {
+    let xCount = board.filter(x => x === 'X').length;
+    let oCount = board.filter(x => x === 'O').length;
+    if (xCount !== oCount && !message) e.preventDefault();
+  });
+
+  renderBoard();
+  updateStatus();
 })();
 </script>
 </body>
