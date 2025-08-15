@@ -37,7 +37,7 @@
             aspect-ratio: 1 / 1; /* Keep square */
         }
         .cell {
-            aspect-ratio: 1 / 1; /* Square buttons */
+            aspect-ratio: 1 / 1;
             font-size: clamp(1.5rem, 5vw, 3rem);
             background: #fff;
             border: 0.3rem solid #59abe3;
@@ -47,7 +47,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.15s, transform 0.12s, color 0.12s;
+            transition: background 0.3s, transform 0.12s, color 0.12s;
             user-select: none;
         }
         .cell.x {
@@ -58,6 +58,14 @@
         }
         .cell.animate {
             animation: pop 0.18s;
+        }
+        /* Win highlight for winning cells */
+        .cell.win {
+            background-color: #ffcccc;
+            border-color: #ff4444;
+            color: #cc0000 !important;
+            font-weight: 900;
+            box-shadow: 0 0 10px 2px #ff6666;
         }
         @keyframes pop {
             0% {
@@ -105,7 +113,6 @@
     <div id="status"></div>
     <div id="container">
         <div id="board"></div>
-        <!-- Winning line SVG removed as requested -->
     </div>
     <button class="btn" onclick="restartGame()">Restart</button>
 
@@ -125,14 +132,22 @@
         for (let i = 0; i < 9; i++) {
             const btn = document.createElement('button');
             btn.className = 'cell';
+
+            // Add player classes
             if (board[i] === 'X') btn.classList.add('x');
             if (board[i] === 'O') btn.classList.add('o');
+
             btn.innerHTML = board[i] === ' ' ? '' : board[i];
             btn.disabled = board[i] !== ' ' || gameOver;
+
+            // Highlight winning cells
+            if (winningCombo.includes(i)) {
+                btn.classList.add('win');
+            }
+
             btn.onclick = () => handleMove(i);
             boardDiv.appendChild(btn);
         }
-        // Removed winning line drawing
     }
 
     async function handleMove(i) {
@@ -189,8 +204,6 @@
 
     renderBoard();
     updateStatus();
-
-    // Removed resize listener and win line drawing calls
 })();
 </script>
 </body>
