@@ -16,9 +16,13 @@
             margin: 24px 0 0 0;
         }
         #board {
-            display: grid; grid-template-columns: repeat(3, 80px); grid-gap: 10px;
-            background: #e1ecf4; padding: 20px;
-            border-radius: 22px; box-shadow: 0 8px 24px #3332;
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-gap: 10px;
+            background: #e1ecf4;
+            padding: 20px;
+            border-radius: 22px;
+            box-shadow: 0 8px 24px #3332;
         }
         .cell {
             width: 80px; height: 80px;
@@ -51,9 +55,9 @@
         }
         .btn:hover { background: #185886;}
         #win-line {
-            position: absolute; top: 20px; left: 20px;
+            position: absolute;
+            top: 0; left: 0;
             pointer-events: none;
-            width: 260px; height: 260px; /* Matches 3*80 + 2*10 (gap) */
             z-index: 10;
         }
         /* Responsive */
@@ -71,6 +75,7 @@
         <svg id="win-line"></svg>
     </div>
     <button class="btn" onclick="restartGame()">Restart</button>
+
 <script>
 (() => {
     let board = {{ board|tojson|safe }};
@@ -82,25 +87,32 @@
     const statusDiv = document.getElementById('status');
     const winLineSvg = document.getElementById('win-line');
 
-    // Dynamically calculate cell centers based on cell size/gaps
+    function getBoardDimensions() {
+        const cell = 80, gap = 10, pad = 20;
+        const size = 3*cell + 2*gap + 2*pad;
+        return {cell, gap, pad, size};
+    }
+
     function getCellCenters() {
-        // Hard-coded for the board size above: 80px cell + 10px gap
+        const {cell, gap, pad} = getBoardDimensions();
         let centers = [];
-        let cell = 80, gap = 10;
         for(let row=0; row<3; row++) {
             for(let col=0; col<3; col++) {
-                let x = col * (cell + gap) + cell / 2;
-                let y = row * (cell + gap) + cell / 2;
+                let x = pad + col * (cell + gap) + cell / 2;
+                let y = pad + row * (cell + gap) + cell / 2;
                 centers.push([x, y]);
             }
         }
         return centers;
     }
-    let cellCenters = getCellCenters();
 
     function renderBoard() {
         boardDiv.innerHTML = '';
+        const {size} = getBoardDimensions();
+        winLineSvg.setAttribute('width', size);
+        winLineSvg.setAttribute('height', size);
         winLineSvg.innerHTML = '';
+
         for (let i = 0; i < 9; i++) {
             const btn = document.createElement('button');
             btn.className = 'cell';
@@ -117,15 +129,41 @@
     }
 
     function drawWinningLine(combo) {
-        const centers = getCellCenters();
-        const [a, , c] = combo;
-        const start = centers[a];
-        const end = centers[c];
-        winLineSvg.setAttribute('width', 260);
-        winLineSvg.setAttribute('height', 260);
-        winLineSvg.innerHTML = `<line x1="${start[0]}" y1="${start[1]}" x2="${end}" y2="${end[1]}" stroke="#ffb366" stroke-width="15" stroke-linecap="round">
-            <animate attributeName="x2" from="${start}" to="${end}" dur="0.38s" fill="freeze" />
-            <animate attributeName="y2" from="${start[1]}" to="${end[1]}" dur="0.38s" fill="freeze" />
+        const {cell, gap, pad} = getBoardDimensions();
+        let startX, startY, endX, endY;
+        const key = combo.join();
+
+        if (key === '0,1,2' || key === '3,4,5' || key === '6,7,8') {
+            // Horizontal
+            const row = Math.floor(combo[0] / 3);
+            startX = pad + cell / 2;
+            endX = pad + 2 * (cell + gap) + cell / 2;
+            startY = endY = pad + row * (cell + gap) + cell / 2;
+        } else if (key === '0,3,6' || key === '1,4,7' || key === '2,5,8') {
+            // Vertical
+            const col = combo[0] % 3;
+            startY = pad + cell / 2;
+            endY = pad + 2 * (cell + gap) + cell / 2;
+            startX = endX = pad + col * (cell + gap) + cell / 2;
+        } else if (key === '0,4,8') {
+            // Diagonal TL-BR
+            startX = startY = pad + cell / 2;
+            endX = endY = pad + 2 * (cell + gap) + cell / 2;
+        } else if (key === '2,4,6') {
+            // Diagonal TR-BL
+            startX = pad + 2 * (cell + gap) + cell / 2;
+            startY = pad + cell / 2;
+            endX = pad + cell / 2;
+            endY = pad + 2 * (cell + gap) + cell / 2;
+        } else {
+            const centers = getCellCenters();
+            [startX, startY] = centers[combo[0]];
+            [endX, endY] = centers[combo];
+        }
+
+        winLineSvg.innerHTML = `<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}" stroke="#ffb366" stroke-width="15" stroke-linecap="round">
+          <animate attributeName="x2" from="${startX}" to="${endX}" dur="0.38s" fill="freeze" />
+          <animate attributeName="y2" from="${startY}" to="${endY}" dur="0.38s" fill="freeze" />
         </line>`;
     }
 
@@ -133,7 +171,7 @@
         if (gameOver) return;
         const cellBtn = boardDiv.children[i];
         cellBtn.classList.add('animate');
-        await sleep(100); // wait for animation
+        await sleep(100);
         const resp = await fetch('/move', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
