@@ -1,224 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Tic-Tac-Toe AI</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f4f6fb;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 1rem;
-            box-sizing: border-box;
-        }
-        h1 {
-            color: #34495e;
-            margin-top: 2rem;
-        }
-        #container {
-            position: relative;
-            display: inline-block;
-            margin: 1.5rem 0 0 0;
-            width: 90vw;
-            max-width: 360px;
-        }
-        #board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-gap: 1vw;
-            background: #e1ecf4;
-            padding: 1rem;
-            border-radius: 1.4rem;
-            box-shadow: 0 8px 24px #3332;
-            width: 100%;
-            aspect-ratio: 1 / 1; /* Keep square */
-        }
-        .cell {
-            aspect-ratio: 1 / 1;
-            font-size: clamp(1.5rem, 5vw, 3rem);
-            background: #fff;
-            border: 0.3rem solid #59abe3;
-            border-radius: 1rem;
-            cursor: pointer;
-            color: #2980b9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s, transform 0.12s, color 0.12s;
-            user-select: none;
-        }
-        .cell.x {
-            color: #2980b9;
-        }
-        .cell.o {
-            color: #ff6f61;
-        }
-        .cell.animate {
-            animation: pop 0.18s;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tic-Tac-Toe AI</title>
+<style>
+:root {
+  --primary: #4A6CF7;
+  --primary-dark: #3A56E0;
+  --secondary: #FF6B6B;
+  --secondary-dark: #E94B35;
+  --accent: #9C7BFF;
+  --text-primary: #2C3E50;
+  --text-secondary: #657786;
+  --bg-light: #F8FAFF;
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --border-light: rgba(255, 255, 255, 0.5);
+  --shadow-medium: 0 15px 40px rgba(0,0,0,0.1);
+  --transition: all 0.3s ease;
+}
 
-        /* Red highlight for AI win */
-        .cell.win-ai {
-            background-color: #ffcccc;
-            border-color: #ff4444;
-            color: #cc0000 !important;
-            font-weight: 900;
-            box-shadow: 0 0 10px 2px #ff6666;
-        }
+*{box-sizing:border-box;margin:0;padding:0;}
+body {
+  font-family: 'Nunito', sans-serif;
+  background: linear-gradient(120deg,#f5f7fa 0%,#dde3ff 100%);
+  height:100vh; display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.app-container{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-between;max-width:500px;}
+header{text-align:center;}
+h1{
+  font-size:2.5rem;font-weight:900;
+  background:linear-gradient(135deg,var(--primary) 0%,var(--accent) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.subtitle{color:var(--text-secondary);margin-top:0.4rem;font-size:1rem;}
 
-        /* Green highlight for human win */
-        .cell.win-human {
-            background-color: #ccffcc;
-            border-color: #22aa22;
-            color: #117711 !important;
-            font-weight: 900;
-            box-shadow: 0 0 10px 2px #55cc55;
-        }
+.game-container{text-align:center;}
+#status{
+  margin:1rem auto;padding:0.8rem 1rem;min-height:50px;
+  border-radius:12px;background:var(--bg-glass);backdrop-filter:blur(12px);
+  box-shadow:var(--shadow-medium); font-weight:600;
+}
+#container{background:var(--bg-glass);backdrop-filter:blur(12px);padding:1.2rem;border-radius:20px;box-shadow:var(--shadow-medium);}
+#board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;aspect-ratio:1;width:270px;}
+.cell{
+  background:#fff;border:none;border-radius:12px;cursor:pointer;
+  font-size:2.5rem;font-weight:800;color:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 5px 12px rgba(0,0,0,0.08);transition:var(--transition);
+}
+.cell:hover{transform:translateY(-3px) scale(1.05);}
+.cell.x{color:var(--primary);}
+.cell.o{color:var(--secondary);}
+.cell.win-human{background:#ebf2ff;color:var(--primary-dark);}
+.cell.win-ai{background:#ffeaea;color:var(--secondary-dark);}
+.cell.animate{animation:pop 0.3s;}
+@keyframes pop{0%{transform:scale(0.7);}100%{transform:scale(1);}}
 
-        @keyframes pop {
-            0% {
-                transform: scale(1);
-            }
-            70% {
-                transform: scale(1.26);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-        .cell:disabled,
-        .cell.disabled {
-            background: #f7f6f2;
-            color: #bbb;
-            cursor: not-allowed;
-        }
-        #status {
-            margin: 1.5rem 0 0 0;
-            font-size: 1.2rem;
-            min-height: 28px;
-            text-align: center;
-            color: #34495e;
-        }
-        .btn {
-            padding: 0.75rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 0.75rem;
-            background: #2980b9;
-            color: #fff;
-            border: none;
-            margin: 1.5rem 0 3rem 0;
-            transition: background 0.2s;
-            box-shadow: 1px 2px 8px #294E6322;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #185886;
-        }
-    </style>
+.controls{margin-top:1rem;display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;}
+.btn{
+  padding:0.7rem 1.5rem; border-radius:10px; font-weight:700; border:none; cursor:pointer;
+  transition:var(--transition);
+}
+.btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;}
+.btn.primary:hover{transform:translateY(-3px);}
+.btn.secondary{background:#f0f2ff;color:var(--text-primary);}
+.btn.secondary:hover{background:#e6e9ff;}
+
+footer{
+  text-align:center;margin:1rem 0; font-size:0.85rem; color:var(--text-secondary);
+  background:var(--bg-glass);padding:0.8rem 1rem;border-radius:12px;box-shadow:var(--shadow-medium);
+}
+footer span{font-weight:700;color:var(--primary);}
+footer a{color:var(--primary);text-decoration:none;margin:0 0.3rem;transition:var(--transition);}
+footer a:hover{color:var(--primary-dark);}
+
+.confetti{position:absolute;width:10px;height:10px;border-radius:50%;animation:fall 4s linear forwards;}
+@keyframes fall{0%{transform:translateY(-100px);}100%{transform:translateY(100vh);opacity:0;}}
+
+/* Modal */
+.modal-bg{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:0.3s;
+}
+.modal-bg.active{opacity:1;pointer-events:auto;}
+.modal{
+  background:var(--bg-glass);backdrop-filter:blur(12px);padding:1.5rem 2rem;border-radius:18px;
+  box-shadow:var(--shadow-medium);max-width:320px;text-align:left;position:relative;
+}
+.modal h2{margin-bottom:1rem;font-size:1.4rem;color:var(--primary);display:flex;align-items:center;}
+.modal p{margin-bottom:0.6rem;line-height:1.5;}
+.modal .close-btn{
+  position:absolute;top:10px;right:10px;background:none;border:none;font-size:1.4rem;cursor:pointer;
+}
+</style>
 </head>
 <body>
-    <h1>Tic-Tac-Toe vs AI</h1>
-    <div id="status"></div>
-    <div id="container">
-        <div id="board"></div>
+<div class="app-container">
+  <header>
+    <h1>🎮 Tic-Tac-Toe vs 🤖</h1>
+    <div class="subtitle">Can you outsmart the algorithm?</div>
+  </header>
+  
+  <div class="game-container">
+    <div id="status">Your turn! Place your X</div>
+    <div id="container"><div id="board"></div></div>
+    <div class="controls">
+      <button class="btn primary" onclick="restartGame()">Restart Game</button>
+      <button class="btn secondary" onclick="toggleModal(true)">How to Play</button>
     </div>
-    <button class="btn" onclick="restartGame()">Restart</button>
+  </div>
+
+  <footer>
+    Built with ☕️, sunshine, and grit by <span>Kishlay</span><br>
+    <a href="https://github.com/innovatewithkishlay/Tic-Tac-Toe-AI" target="_blank">GitHub</a> |
+    <a href="https://kishlaykumar.onrender.com/" target="_blank">Portfolio</a>
+  </footer>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <button class="close-btn" onclick="toggleModal(false)">✖</button>
+    <h2>📜 How to Play</h2>
+    <p>✅ You are <strong style="color:var(--primary)">X</strong>, AI is <strong style="color:var(--secondary)">O</strong></p>
+    <p>🎯 Take turns placing your marks.</p>
+    <p>🏆 First to connect 3 in a row wins!</p>
+    <p>🔄 Use "Restart" anytime for a new game.</p>
+  </div>
+</div>
 
 <script>
 (() => {
-    let board = {{ board|tojson|safe }};
-    let message = {{ message|tojson|safe }};
-    let winningCombo = {{ winning_combo|tojson|safe }};
-    let gameOver = false;
+  let board = Array(9).fill(' ');
+  let gameOver=false,winningCombo=[];
+  const boardDiv=document.getElementById("board"),statusDiv=document.getElementById("status");
 
-    const boardDiv = document.getElementById('board');
-    const statusDiv = document.getElementById('status');
-
-    function renderBoard() {
-        boardDiv.innerHTML = '';
-
-        for (let i = 0; i < 9; i++) {
-            const btn = document.createElement('button');
-            btn.className = 'cell';
-
-            if (board[i] === 'X') btn.classList.add('x');
-            if (board[i] === 'O') btn.classList.add('o');
-
-            btn.innerHTML = board[i] === ' ' ? '' : board[i];
-            btn.disabled = board[i] !== ' ' || gameOver;
-
-            if (winningCombo.includes(i)) {
-                if (message && message.toLowerCase().includes('ai')) {
-                    btn.classList.add('win-ai');
-                } else if (message && message.toLowerCase().includes('you')) {
-                    btn.classList.add('win-human');
-                } else {
-                    btn.classList.add('win-ai');  // fallback
-                }
-            }
-
-            btn.onclick = () => handleMove(i);
-            boardDiv.appendChild(btn);
-        }
+  function createBoard(){
+    boardDiv.innerHTML='';
+    for(let i=0;i<9;i++){
+      const b=document.createElement("button");
+      b.className="cell"; b.onclick=()=>handleMove(i);
+      boardDiv.appendChild(b);
     }
-
-    async function handleMove(i) {
-        if (gameOver) return;
-        const cellBtn = boardDiv.children[i];
-        cellBtn.classList.add('animate');
-        await sleep(100);
-        const resp = await fetch('/move', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ move: i })
-        });
-        const data = await resp.json();
-        board = data.board;
-        message = data.message;
-        winningCombo = data.winning_combo;
-        gameOver = !!message;
-        renderBoard();
-        updateStatus();
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    function updateStatus() {
-        if (!message) {
-            let xCount = board.filter(x => x === 'X').length;
-            let oCount = board.filter(x => x === 'O').length;
-            statusDiv.textContent = (xCount === oCount) ? "Your turn!" : "AI is thinking...";
-        } else {
-            statusDiv.innerHTML = `${message}<br><span style="color:#888; font-size:0.96em;">Don't worry, you can beat the AI if you try again!</span>`;
-        }
-    }
-
-    window.restartGame = () => {
-        fetch('/reset', { method: 'POST' })
-            .then(resp => resp.json())
-            .then(data => {
-                board = data.board;
-                message = null;
-                gameOver = false;
-                winningCombo = [];
-                renderBoard();
-                updateStatus();
-            });
-    };
-
-    boardDiv.addEventListener('click', e => {
-        let xCount = board.filter(x => x === 'X').length;
-        let oCount = board.filter(x => x === 'O').length;
-        if (xCount !== oCount && !message) e.preventDefault();
+  }
+  function renderBoard(msg){
+    board.forEach((val,i)=>{
+      const cell=boardDiv.children[i];
+      cell.textContent=val===' '?"":val;
+      cell.disabled=val!==' '||gameOver;
+      cell.className="cell";
+      if(val==='X') cell.classList.add("x");
+      if(val==='O') cell.classList.add("o");
+      if(winningCombo.includes(i)){cell.classList.add(msg.includes("AI")?"win-ai":"win-human");}
     });
-
-    renderBoard();
-    updateStatus();
+  }
+  async function handleMove(i){
+    if(gameOver||board[i]!==' ')return;
+    board[i]='X';renderBoard("");
+    if(checkWin('X')) return endGame("You win! 🎉");
+    if(isDraw())return endGame("It's a draw 🤝");
+    statusDiv.textContent="AI is thinking...";
+    await new Promise(r=>setTimeout(r,600));
+    const ai=getAIMove(); board[ai]='O';renderBoard("");
+    if(checkWin('O')) return endGame("AI wins! 🤖");
+    if(isDraw())return endGame("It's a draw 🤝");
+    statusDiv.textContent="Your turn! Place your X";
+  }
+  function getAIMove(){
+    for(let i=0;i<9;i++){if(board[i]===' '){board[i]='O';if(checkWin('O')){board[i]=' ';return i;}board[i]=' ';}}
+    for(let i=0;i<9;i++){if(board[i]===' '){board[i]='X';if(checkWin('X')){board[i]=' ';return i;}board[i]=' ';}}
+    if(board[4]===' ') return 4;
+    const corners=[0,2,6,8].filter(i=>board[i]===' '); if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
+    const sides=[1,3,5,7].filter(i=>board[i]===' '); if(sides.length) return sides[Math.floor(Math.random()*sides.length)];
+    return board.findIndex(v=>v===' ');
+  }
+  function checkWin(p){
+    const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    return lines.some(([a,b,c])=>{if(board[a]===p&&board[b]===p&&board[c]===p){winningCombo=[a,b,c];return true;}return false;});
+  }
+  function isDraw(){return board.every(x=>x!==' ');}
+  function endGame(msg){
+    gameOver=true;statusDiv.textContent=msg;renderBoard(msg);
+    if(msg.includes("You win")) confettiBlast();
+  }
+  function confettiBlast(){
+    const colors=['#4A6CF7','#FF6B6B','#9C7BFF'];
+    for(let i=0;i<50;i++){const c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"vw";c.style.background=colors[Math.floor(Math.random()*colors.length)];document.body.appendChild(c);setTimeout(()=>c.remove(),4000);}
+  }
+  window.restartGame=()=>{board=Array(9).fill(' ');gameOver=false;winningCombo=[];statusDiv.textContent="Your turn! Place your X";createBoard();};
+  window.toggleModal=(show)=>{document.getElementById("modal-bg").classList.toggle("active",show);}
+  createBoard();
 })();
 </script>
 </body>
