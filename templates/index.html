@@ -5,62 +5,152 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Tic-Tac-Toe AI</title>
 <style>
+  /* Modern Color Scheme and Typography */
+  :root {
+    --primary: #4A6CF7;
+    --primary-dark: #3A56E0;
+    --secondary: #FF6B6B;
+    --secondary-dark: #E94B35;
+    --accent: #9C7BFF;
+    --text-primary: #2C3E50;
+    --text-secondary: #657786;
+    --bg-light: #F8FAFF;
+    --bg-glass: rgba(255, 255, 255, 0.85);
+    --border-light: rgba(255, 255, 255, 0.5);
+    --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.05);
+    --shadow-medium: 0 15px 40px rgba(0, 0, 0, 0.1);
+    --shadow-dark: 0 20px 50px rgba(0, 0, 0, 0.15);
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+
   /* Reset and base */
   *, *::before, *::after {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
+  
   html, body {
     height: 100%;
     margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f0f4f8;
-    color: #2c3e50;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e7ff 100%);
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    position: relative;
   }
 
-  body {
+  /* Background Decoration */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(154, 123, 255, 0.15) 0%, rgba(74, 108, 247, 0.15) 100%);
+    z-index: -1;
+  }
+
+  body::after {
+    content: '';
+    position: absolute;
+    bottom: 100px;
+    left: -50px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(233, 75, 53, 0.1) 100%);
+    z-index: -1;
+  }
+
+  /* Main Layout */
+  .app-container {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    max-width: 100vw;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
   }
 
-  main {
-    flex: 1 0 auto;
+  header {
+    text-align: center;
+    margin: 1rem 0 1.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  h1 {
+    font-weight: 800;
+    font-size: 2.5rem;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Game Container */
+  .game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 2rem 1rem;
-  }
-
-  h1 {
-    font-weight: 700;
-    font-size: 2.8rem;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.04em;
-    color: #34495e;
-    text-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
   }
 
   #status {
     margin-bottom: 1.8rem;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1.2rem;
     text-align: center;
-    min-height: 44px;
-    max-width: 320px;
-    line-height: 1.3;
-    color: #34495e;
+    min-height: 60px;
+    max-width: 100%;
+    line-height: 1.4;
+    color: var(--text-primary);
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
   }
 
   #container {
-    background: #ffffff;
-    box-shadow: 0 15px 40px rgb(0 0 0 / 0.1);
-    border-radius: 1.25rem;
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-medium);
+    border-radius: 24px;
     padding: 1.8rem;
-    width: 320px;
-    max-width: 90vw;
+    width: 100%;
+    max-width: 350px;
+    border: 1px solid var(--border-light);
+    transition: var(--transition);
+  }
+
+  #container:hover {
+    box-shadow: var(--shadow-dark);
   }
 
   #board {
@@ -71,204 +161,525 @@
   }
 
   .cell {
-    background: #f7fafc;
-    border: 3px solid #6cb4ee;
-    border-radius: 1rem;
-    font-weight: 700;
-    font-size: clamp(1.8rem, 5vw, 3rem);
-    color: #2980b9;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    color: var(--primary);
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     user-select: none;
-    transition: background-color 0.25s, box-shadow 0.25s, color 0.25s;
+    transition: var(--transition);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
   }
 
-  .cell.x { color: #2980b9; }
-  .cell.o { color: #e94b35; }
-  .cell.animate {
-    animation: pop 0.2s;
+  .cell::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.4) 100%);
+    z-index: 0;
   }
+
+  .cell:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  }
+
+  .cell:active {
+    transform: translateY(1px);
+  }
+
+  .cell.x { 
+    color: var(--primary);
+    text-shadow: 0 2px 6px rgba(74, 108, 247, 0.3);
+  }
+  
+  .cell.o { 
+    color: var(--secondary);
+    text-shadow: 0 2px 6px rgba(255, 107, 107, 0.3);
+  }
+  
+  .cell.animate {
+    animation: pop 0.3s;
+  }
+  
   .cell:disabled, .cell.disabled {
     cursor: not-allowed;
-    background: #dde6ed;
-    color: #a0a6ad;
+    background: rgba(245, 247, 250, 0.8);
+    color: #c0c5d0;
+    transform: none;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
   }
 
   /* Win highlight */
   .cell.win-ai {
-    background: #ffe5e5;
-    border-color: #e94b35;
-    color: #c0392b !important;
-    box-shadow: 0 0 8px 3px #fa807225;
+    background: linear-gradient(135deg, rgba(255, 235, 235, 0.9) 0%, rgba(255, 245, 245, 0.9) 100%);
+    color: var(--secondary-dark) !important;
+    box-shadow: 0 0 15px 5px rgba(255, 107, 107, 0.2);
+    animation: pulse 2s infinite;
   }
+  
   .cell.win-human {
-    background: #e6f9e6;
-    border-color: #27ae60;
-    color: #219150 !important;
-    box-shadow: 0 0 8px 3px #98fb9875;
+    background: linear-gradient(135deg, rgba(235, 245, 255, 0.9) 0%, rgba(245, 250, 255, 0.9) 100%);
+    color: var(--primary-dark) !important;
+    box-shadow: 0 0 15px 5px rgba(74, 108, 247, 0.2);
+    animation: pulse 2s infinite;
   }
 
   @keyframes pop {
     0% { transform: scale(1); }
-    70% { transform: scale(1.25); }
+    50% { transform: scale(1.15); }
     100% { transform: scale(1); }
   }
 
-  button.btn {
-    margin-top: 1.8rem;
-    background-color: #2980b9;
-    color: #fff;
-    border: none;
-    padding: 0.8rem 2.2rem;
-    font-size: 1.15rem;
-    font-weight: 600;
-    border-radius: 0.9rem;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgb(41 128 185 / 0.4);
-    transition: background-color 0.3s ease;
-    align-self: center;
-    user-select: none;
-  }
-  button.btn:hover,
-  button.btn:focus-visible {
-    background-color: #21689f;
+  @keyframes pulse {
+    0% { box-shadow: 0 0 15px 5px rgba(74, 108, 247, 0.2); }
+    50% { box-shadow: 0 0 20px 8px rgba(74, 108, 247, 0.3); }
+    100% { box-shadow: 0 0 15px 5px rgba(74, 108, 247, 0.2); }
   }
 
+  /* Button Styles */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.8rem;
+    justify-content: center;
+  }
+
+  button.btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    border: none;
+    padding: 0.9rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(74, 108, 247, 0.35);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  button.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    opacity: 0;
+    transition: var(--transition);
+    z-index: -1;
+  }
+  
+  button.btn:hover,
+  button.btn:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(74, 108, 247, 0.45);
+  }
+  
+  button.btn:hover::before,
+  button.btn:focus-visible::before {
+    opacity: 1;
+  }
+  
+  button.btn:active {
+    transform: translateY(1px);
+  }
+
+  button.secondary {
+    background: linear-gradient(135deg, #f0f4f8 0%, #e6e9ff 100%);
+    color: var(--text-primary);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+  
+  button.secondary::before {
+    background: linear-gradient(135deg, #e6e9ff 0%, #f0f4f8 100%);
+  }
+  
+  button.secondary:hover,
+  button.secondary:focus-visible {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  }
+
+  /* Footer */
   footer#footer {
     flex-shrink: 0;
-    background: #f7fafc;
+    background: var(--bg-glass);
+    backdrop-filter: blur(10px);
     text-align: center;
     padding: 1.2rem 1rem;
-    font-size: 0.85rem;
-    color: #657786;
-    border-top: 1px solid #d4dde6;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-top: 1px solid rgba(212, 221, 230, 0.4);
     user-select: none;
+    margin-top: 2rem;
+    border-radius: 16px;
+    max-width: 450px;
+    margin: 2rem auto 0;
+    box-shadow: var(--shadow-light);
+    border: 1px solid var(--border-light);
   }
+  
   footer#footer a {
-    color: #2980b9;
+    color: var(--primary);
     text-decoration: none;
     font-weight: 600;
     margin: 0 0.5rem;
+    transition: var(--transition);
+    position: relative;
   }
+  
+  footer#footer a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--primary);
+    transition: var(--transition);
+  }
+  
   footer#footer a:hover,
   footer#footer a:focus-visible {
-    text-decoration: underline;
-    color: #21689f;
+    color: var(--primary-dark);
+  }
+  
+  footer#footer a:hover::after,
+  footer#footer a:focus-visible::after {
+    width: 100%;
+  }
+
+  /* Win Animation */
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: confetti-fall 4s linear forwards;
+    z-index: 1;
+  }
+  
+  @keyframes confetti-fall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 2.2rem;
+    }
+    
+    .subtitle {
+      font-size: 1rem;
+    }
+    
+    #container {
+      padding: 1.2rem;
+      max-width: 300px;
+    }
+    
+    .controls {
+      flex-direction: column;
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    button.btn {
+      width: 100%;
+    }
   }
 </style>
 </head>
 <body>
-  <main>
-    <h1>Tic-Tac-Toe vs AI</h1>
-    <div id="status"></div>
-    <div id="container">
-      <div id="board"></div>
+  <div class="app-container">
+    <header>
+      <h1>Tic-Tac-Toe vs AI</h1>
+      <div class="subtitle">Test your strategy against our intelligent algorithm</div>
+    </header>
+    
+    <div class="game-container">
+      <div id="status">Your turn! Place your X to start the game</div>
+      <div id="container">
+        <div id="board"></div>
+      </div>
+      <div class="controls">
+        <button class="btn" onclick="restartGame()">Restart Game</button>
+        <button class="btn secondary" onclick="showInstructions()">How to Play</button>
+      </div>
     </div>
-    <button class="btn" onclick="restartGame()">Restart</button>
-  </main>
 
-  <footer id="footer">
-    <p>Made with ❤️ by Kishlay</p>
-    <p>
-      <a href="https://github.com/innovatewithkishlay/Tic-Tac-Toe-AI" target="_blank" rel="noopener noreferrer">GitHub Repo</a> |
-      <a href="https://kishlaykumar.onrender.com/" target="_blank" rel="noopener noreferrer">Portfolio</a>
-    </p>
-  </footer>
+    <footer id="footer">
+      <p>Made with ❤️ by Kishlay</p>
+      <p>
+        <a href="https://github.com/innovatewithkishlay/Tic-Tac-Toe-AI" target="_blank" rel="noopener noreferrer">GitHub Repo</a> |
+        <a href="https://kishlaykumar.onrender.com/" target="_blank" rel="noopener noreferrer">Portfolio</a>
+      </p>
+    </footer>
+  </div>
 
 <script>
 (() => {
-  let board = {{ board|tojson|safe }};
-  let message = {{ message|tojson|safe }};
-  let winningCombo = {{ winning_combo|tojson|safe }};
+  // Initialize game state
+  let board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+  let message = null;
+  let winningCombo = [];
   let gameOver = false;
+  let currentPlayer = 'X';
+  let playerScore = 0;
+  let aiScore = 0;
+  let ties = 0;
 
   const boardDiv = document.getElementById('board');
   const statusDiv = document.getElementById('status');
 
-  function renderBoard() {
+  // Create initial board
+  function createBoard() {
     boardDiv.innerHTML = '';
-
     for (let i = 0; i < 9; i++) {
       const btn = document.createElement('button');
       btn.className = 'cell';
-
-      if (board[i] === 'X') btn.classList.add('x');
-      if (board[i] === 'O') btn.classList.add('o');
-
-      btn.innerHTML = board[i] === ' ' ? '' : board[i];
-      btn.disabled = board[i] !== ' ' || gameOver;
-
-      if (winningCombo.includes(i)) {
-        if (message && message.toLowerCase().includes('ai')) {
-          btn.classList.add('win-ai');
-        } else if (message && message.toLowerCase().includes('you')) {
-          btn.classList.add('win-human');
-        } else {
-          btn.classList.add('win-ai');
-        }
-      }
-
+      btn.innerHTML = '';
       btn.onclick = () => handleMove(i);
       boardDiv.appendChild(btn);
     }
   }
 
+  // Update board display
+  function renderBoard() {
+    for (let i = 0; i < 9; i++) {
+      const cellBtn = boardDiv.children[i];
+      cellBtn.innerHTML = board[i] === ' ' ? '' : board[i];
+      
+      // Reset classes
+      cellBtn.className = 'cell';
+      if (board[i] === 'X') cellBtn.classList.add('x');
+      if (board[i] === 'O') cellBtn.classList.add('o');
+      
+      // Disable if cell is occupied or game is over
+      cellBtn.disabled = board[i] !== ' ' || gameOver;
+      
+      // Highlight winning cells
+      if (winningCombo.includes(i)) {
+        if (message && message.toLowerCase().includes('ai')) {
+          cellBtn.classList.add('win-ai');
+        } else if (message && message.toLowerCase().includes('you')) {
+          cellBtn.classList.add('win-human');
+        }
+      }
+    }
+  }
+
+  // Handle player move
   async function handleMove(i) {
-    if (gameOver) return;
+    if (gameOver || board[i] !== ' ') return;
+    
+    // Player move
     const cellBtn = boardDiv.children[i];
     cellBtn.classList.add('animate');
-    await sleep(100);
-    const resp = await fetch('/move', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({move: i})
-    });
-    const data = await resp.json();
-    board = data.board;
-    message = data.message;
-    winningCombo = data.winning_combo;
-    gameOver = !!message;
+    board[i] = 'X';
     renderBoard();
-    updateStatus();
+    
+    // Check win/draw after player move
+    if (checkWin('X')) {
+      endGame("You win! 🎉", 'X');
+      playerScore++;
+      createConfetti();
+      return;
+    } else if (isBoardFull()) {
+      endGame("It's a draw! 🤝", null);
+      ties++;
+      return;
+    }
+    
+    // AI move
+    statusDiv.textContent = "AI is thinking...";
+    await sleep(800); // Simulate AI thinking
+    
+    const aiMove = getAIMove();
+    board[aiMove] = 'O';
+    const aiCell = boardDiv.children[aiMove];
+    aiCell.classList.add('animate');
+    renderBoard();
+    
+    // Check win/draw after AI move
+    if (checkWin('O')) {
+      endGame("AI wins! 🤖", 'O');
+      aiScore++;
+      return;
+    } else if (isBoardFull()) {
+      endGame("It's a draw! 🤝", null);
+      ties++;
+      return;
+    }
+    
+    statusDiv.textContent = "Your turn! Place your X";
+  }
+
+  // Simple AI logic
+  function getAIMove() {
+    // Try to win if possible
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === ' ') {
+        board[i] = 'O';
+        if (checkWin('O')) {
+          board[i] = ' ';
+          return i;
+        }
+        board[i] = ' ';
+      }
+    }
+    
+    // Block player win
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === ' ') {
+        board[i] = 'X';
+        if (checkWin('X')) {
+          board[i] = ' ';
+          return i;
+        }
+        board[i] = ' ';
+      }
+    }
+    
+    // Center if available
+    if (board[4] === ' ') return 4;
+    
+    // Random corner
+    const corners = [0, 2, 6, 8];
+    const availableCorners = corners.filter(i => board[i] === ' ');
+    if (availableCorners.length > 0) {
+      return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+    }
+    
+    // Random side
+    const sides = [1, 3, 5, 7];
+    const availableSides = sides.filter(i => board[i] === ' ');
+    if (availableSides.length > 0) {
+      return availableSides[Math.floor(Math.random() * availableSides.length)];
+    }
+    
+    // Fallback to first available
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === ' ') return i;
+    }
+    
+    return 0;
+  }
+
+  // Check for win
+  function checkWin(player) {
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+      [0, 4, 8], [2, 4, 6]             // diagonals
+    ];
+    
+    for (const pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (board[a] === player && board[b] === player && board[c] === player) {
+        winningCombo = pattern;
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  // Check for draw
+  function isBoardFull() {
+    return board.every(cell => cell !== ' ');
+  }
+
+  // End game
+  function endGame(msg, winner) {
+    gameOver = true;
+    message = msg;
+    
+    // Update status with scores
+    statusDiv.innerHTML = `
+      <strong>${msg}</strong>
+      <div style="margin-top: 10px; font-size: 0.95rem; color: var(--text-secondary);">
+        Score: You ${playerScore} - ${aiScore} AI | Ties: ${ties}
+      </div>
+      <div style="margin-top: 8px; font-size: 0.9rem;">
+        Click "Restart Game" to play again
+      </div>
+    `;
+    
+    // Disable all cells
+    for (let i = 0; i < 9; i++) {
+      boardDiv.children[i].disabled = true;
+    }
+  }
+
+  // Create confetti effect
+  function createConfetti() {
+    const colors = ['#4A6CF7', '#FF6B6B', '#9C7BFF', '#3A56E0', '#E94B35'];
+    const container = document.querySelector('.game-container');
+    
+    for (let i = 0; i < 80; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.animationDelay = Math.random() * 2 + 's';
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.width = Math.random() * 8 + 6 + 'px';
+      confetti.style.height = confetti.style.width;
+      container.appendChild(confetti);
+      
+      setTimeout(() => {
+        confetti.remove();
+      }, 4000);
+    }
   }
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  function updateStatus() {
-    if (!message) {
-      let xCount = board.filter(x => x === 'X').length;
-      let oCount = board.filter(x => x === 'O').length;
-      statusDiv.textContent = (xCount === oCount) ? "Your turn!" : "AI is thinking...";
-    } else {
-      statusDiv.innerHTML = `${message}<br><span style="color:#888; font-size:0.96em;">Don't worry, you can beat the AI if you try again!</span>`;
-    }
-  }
-
+  // Restart game
   window.restartGame = () => {
-    fetch('/reset', {method: 'POST'})
-      .then(resp => resp.json())
-      .then(data => {
-        board = data.board;
-        message = null;
-        gameOver = false;
-        winningCombo = [];
-        renderBoard();
-        updateStatus();
-      });
+    board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '];
+    message = null;
+    gameOver = false;
+    winningCombo = [];
+    createBoard();
+    statusDiv.textContent = "Your turn! Place your X to start the game";
   };
 
-  boardDiv.addEventListener('click', e => {
-    let xCount = board.filter(x => x === 'X').length;
-    let oCount = board.filter(x => x === 'O').length;
-    if (xCount !== oCount && !message) e.preventDefault();
-  });
+  // Show instructions
+  window.showInstructions = () => {
+    statusDiv.innerHTML = `
+      <strong>How to Play</strong>
+      <div style="margin-top: 10px; font-size: 0.95rem; color: var(--text-secondary);">
+        1. You are <span style="color: var(--primary); font-weight: 600;">X</span>, AI is <span style="color: var(--secondary); font-weight: 600;">O</span><br>
+        2. Take turns placing your marks<br>
+        3. First to get 3 in a row wins!
+      </div>
+      <div style="margin-top: 8px; font-size: 0.9rem;">
+        Click "Restart Game" to begin
+      </div>
+    `;
+  };
 
-  renderBoard();
-  updateStatus();
+  // Initialize the game
+  createBoard();
 })();
 </script>
 </body>
