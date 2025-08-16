@@ -64,10 +64,27 @@ h1{
   transition:var(--transition);
 }
 .btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;}
-.btn.primary:hover{transform:translateY(-3px);}
+.btn.primary:hover:not(:disabled){transform:translateY(-3px);}
 .btn.secondary{background:#f0f2ff;color:var(--text-primary);}
-.btn.secondary:hover{background:#e6e9ff;}
+.btn.secondary:hover:not(:disabled){background:#e6e9ff;}
+.btn.undo {
+  background: linear-gradient(135deg, #9C7BFF, #6E57FF);
+  color: white;
+  font-weight: 700;
+  padding: 0.7rem 1.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn.undo:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.btn.undo:hover:not(:disabled) {
+  transform: translateY(-3px);
+}
 
+/* Footer */
 footer{
   text-align:center;margin:1rem 0; font-size:0.85rem; color:var(--text-secondary);
   background:var(--bg-glass);padding:0.8rem 1rem;border-radius:12px;box-shadow:var(--shadow-medium);
@@ -109,6 +126,7 @@ footer a:hover{color:var(--primary-dark);}
     <div id="container"><div id="board"></div></div>
     <div class="controls">
       <button class="btn primary" onclick="restartGame()">Restart Game</button>
+      <button class="btn undo" onclick="undoMove()" id="undoBtn" disabled>Undo</button>
       <button class="btn secondary" onclick="toggleModal(true)">How to Play</button>
     </div>
   </div>
@@ -135,63 +153,161 @@ footer a:hover{color:var(--primary-dark);}
 <script>
 (() => {
   let board = Array(9).fill(' ');
-  let gameOver=false,winningCombo=[];
-  const boardDiv=document.getElementById("board"),statusDiv=document.getElementById("status");
+  let gameOver = false, winningCombo = [];
+  let moveHistory = []; // Store history of board states before player moves
+  const boardDiv = document.getElementById("board");
+  const statusDiv = document.getElementById("status");
+  const undoBtn = document.getElementById("undoBtn");
 
-  function createBoard(){
-    boardDiv.innerHTML='';
-    for(let i=0;i<9;i++){
-      const b=document.createElement("button");
-      b.className="cell"; b.onclick=()=>handleMove(i);
+  function createBoard() {
+    boardDiv.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const b = document.createElement("button");
+      b.className = "cell";
+      b.onclick = () => handleMove(i);
       boardDiv.appendChild(b);
     }
   }
-  function renderBoard(msg){
-    board.forEach((val,i)=>{
-      const cell=boardDiv.children[i];
-      cell.textContent=val===' '?"":val;
-      cell.disabled=val!==' '||gameOver;
-      cell.className="cell";
-      if(val==='X') cell.classList.add("x");
-      if(val==='O') cell.classList.add("o");
-      if(winningCombo.includes(i)){cell.classList.add(msg.includes("AI")?"win-ai":"win-human");}
+
+  function renderBoard(msg = "") {
+    board.forEach((val, i) => {
+      const cell = boardDiv.children[i];
+      cell.textContent = val === ' ' ? "" : val;
+      cell.disabled = val !== ' ' || gameOver;
+      cell.className = "cell";
+      if (val === 'X') cell.classList.add("x");
+      if (val === 'O') cell.classList.add("o");
+      if (winningCombo.includes(i)) {
+        cell.classList.add(msg.includes("AI") ? "win-ai" : "win-human");
+      }
+    });
+    // Enable undo only if game not over and there is history
+    undoBtn.disabled = gameOver || moveHistory.length === 0;
+  }
+
+  async function handleMove(i) {
+    if (gameOver || board[i] !== ' ') return;
+    
+    // Save current state before player move for undo
+    moveHistory.push([...board]);
+
+    // Player move
+    board[i] = 'X';
+    renderBoard();
+    if (checkWin('X')) return endGame("You win! 🎉");
+    if (isDraw()) return endGame("It's a draw 🤝");
+    
+    statusDiv.textContent = "AI is thinking...";
+    await new Promise(r => setTimeout(r, 600));
+
+    // AI move
+    const ai = getAIMove(); 
+    board[ai] = 'O';
+    renderBoard();
+    if (checkWin('O')) return endGame("AI wins! 🤖");
+    if (isDraw()) return endGame("It's a draw 🤝");
+
+    statusDiv.textContent = "Your turn! Place your X";
+    // Undo available now
+    undoBtn.disabled = false;
+  }
+
+  function undoMove() {
+    if (moveHistory.length === 0 || gameOver) return;
+
+    let prevBoard = moveHistory.pop(); // revert to previous state before player move
+    board = [...prevBoard];
+    winningCombo = [];
+    gameOver = false;
+    statusDiv.textContent = "Your turn! Place your X";
+    renderBoard();
+    undoBtn.disabled = moveHistory.length === 0;
+  }
+
+  function getAIMove() {
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === ' ') {
+        board[i] = 'O';
+        if (checkWin('O')) {
+          board[i] = ' ';
+          return i;
+        }
+        board[i] = ' ';
+      }
+    }
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === ' ') {
+        board[i] = 'X';
+        if (checkWin('X')) {
+          board[i] = ' ';
+          return i;
+        }
+        board[i] = ' ';
+      }
+    }
+    if (board[4] === ' ') return 4;
+    const corners = [0, 2, 6, 8].filter(i => board[i] === ' ');
+    if (corners.length) return corners[Math.floor(Math.random() * corners.length)];
+    const sides = [1, 3, 5, 7].filter(i => board[i] === ' ');
+    if (sides.length) return sides[Math.floor(Math.random() * sides.length)];
+    return board.findIndex(v => v === ' ');
+  }
+
+  function checkWin(p) {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+      [0, 3, 6], [1, 4, 7], [2, 5, 8], // cols
+      [0, 4, 8], [2, 4, 6]             // diagonals
+    ];
+    return lines.some(([a, b, c]) => {
+      if (board[a] === p && board[b] === p && board[c] === p) {
+        winningCombo = [a, b, c];
+        return true;
+      }
+      return false;
     });
   }
-  async function handleMove(i){
-    if(gameOver||board[i]!==' ')return;
-    board[i]='X';renderBoard("");
-    if(checkWin('X')) return endGame("You win! 🎉");
-    if(isDraw())return endGame("It's a draw 🤝");
-    statusDiv.textContent="AI is thinking...";
-    await new Promise(r=>setTimeout(r,600));
-    const ai=getAIMove(); board[ai]='O';renderBoard("");
-    if(checkWin('O')) return endGame("AI wins! 🤖");
-    if(isDraw())return endGame("It's a draw 🤝");
-    statusDiv.textContent="Your turn! Place your X";
+
+  function isDraw() {
+    return board.every(x => x !== ' ');
   }
-  function getAIMove(){
-    for(let i=0;i<9;i++){if(board[i]===' '){board[i]='O';if(checkWin('O')){board[i]=' ';return i;}board[i]=' ';}}
-    for(let i=0;i<9;i++){if(board[i]===' '){board[i]='X';if(checkWin('X')){board[i]=' ';return i;}board[i]=' ';}}
-    if(board[4]===' ') return 4;
-    const corners=[0,2,6,8].filter(i=>board[i]===' '); if(corners.length) return corners[Math.floor(Math.random()*corners.length)];
-    const sides=[1,3,5,7].filter(i=>board[i]===' '); if(sides.length) return sides[Math.floor(Math.random()*sides.length)];
-    return board.findIndex(v=>v===' ');
+
+  function endGame(msg) {
+    gameOver = true;
+    statusDiv.textContent = msg;
+    renderBoard(msg);
+    if (msg.includes("You win")) confettiBlast();
+    undoBtn.disabled = true;
   }
-  function checkWin(p){
-    const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-    return lines.some(([a,b,c])=>{if(board[a]===p&&board[b]===p&&board[c]===p){winningCombo=[a,b,c];return true;}return false;});
+
+  function confettiBlast() {
+    const colors = ['#4A6CF7', '#FF6B6B', '#9C7BFF'];
+    for (let i = 0; i < 50; i++) {
+      const c = document.createElement("div");
+      c.className = "confetti";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 4000);
+    }
   }
-  function isDraw(){return board.every(x=>x!==' ');}
-  function endGame(msg){
-    gameOver=true;statusDiv.textContent=msg;renderBoard(msg);
-    if(msg.includes("You win")) confettiBlast();
-  }
-  function confettiBlast(){
-    const colors=['#4A6CF7','#FF6B6B','#9C7BFF'];
-    for(let i=0;i<50;i++){const c=document.createElement("div");c.className="confetti";c.style.left=Math.random()*100+"vw";c.style.background=colors[Math.floor(Math.random()*colors.length)];document.body.appendChild(c);setTimeout(()=>c.remove(),4000);}
-  }
-  window.restartGame=()=>{board=Array(9).fill(' ');gameOver=false;winningCombo=[];statusDiv.textContent="Your turn! Place your X";createBoard();};
-  window.toggleModal=(show)=>{document.getElementById("modal-bg").classList.toggle("active",show);}
+
+  window.restartGame = () => {
+    board = Array(9).fill(' ');
+    gameOver = false;
+    winningCombo = [];
+    moveHistory = [];
+    statusDiv.textContent = "Your turn! Place your X";
+    undoBtn.disabled = true;
+    createBoard();
+  };
+
+  window.toggleModal = (show) => {
+    document.getElementById("modal-bg").classList.toggle("active", show);
+  };
+
+  window.undoMove = undoMove;
+
   createBoard();
 })();
 </script>
